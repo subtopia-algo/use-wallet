@@ -4,6 +4,7 @@
   "version": "2.5.0",
   "license": "MIT",
   "description": "React hooks for using Algorand compatible wallets in dApps.",
+  "postinstall": "npm run build",
   "scripts": {
     "dev": "yarn storybook",
     "build": "rimraf dist && rollup -c",
