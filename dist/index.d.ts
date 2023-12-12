@@ -93,6 +93,7 @@ interface Account {
     name: string;
     address: string;
     authAddr?: string;
+    email?: string;
 }
 type Provider = {
     accounts: Account[];
@@ -689,6 +690,7 @@ declare class MagicAuth extends BaseClient {
             name: string;
             address: string;
             providerId: PROVIDER_ID;
+            email: string;
         }[];
         id: PROVIDER_ID;
         name: string;

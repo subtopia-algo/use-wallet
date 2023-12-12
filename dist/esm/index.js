@@ -2556,7 +2556,8 @@ class MagicAuth extends BaseClient {
                 {
                     name: `MagicWallet ${userInfo.email ?? ''} 1`,
                     address: userInfo.publicAddress ?? 'N/A',
-                    providerId: MagicAuth.metadata.id
+                    providerId: MagicAuth.metadata.id,
+                    email: userInfo.email ?? ''
                 }
             ]
         };
@@ -2573,7 +2574,8 @@ class MagicAuth extends BaseClient {
                 {
                     name: `MagicWallet ${userInfo.email ?? ''} 1`,
                     address: userInfo.publicAddress ?? 'N/A',
-                    providerId: MagicAuth.metadata.id
+                    providerId: MagicAuth.metadata.id,
+                    email: userInfo.email ?? ''
                 }
             ]
         };
