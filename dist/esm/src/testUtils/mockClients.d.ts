@@ -2,6 +2,7 @@ import AlgoSignerClient from '../clients/algosigner/client';
 import DaffiWalletClient from '../clients/daffi/client';
 import DeflyWalletClient from '../clients/defly/client';
 import ExodusClient from '../clients/exodus/client';
+import LuteClient from '../clients/lute/client';
 import KMDWalletClient from '../clients/kmd/client';
 import MnemonicWalletClient from '../clients/mnemonic/client';
 import MyAlgoWalletClient from '../clients/myalgo/client';
@@ -22,6 +23,7 @@ type ClientTypeMap = {
     [PROVIDER_ID.MYALGO]: MyAlgoWalletClient;
     [PROVIDER_ID.PERA]: PeraWalletClient;
     [PROVIDER_ID.WALLETCONNECT]: WalletConnectClient;
+    [PROVIDER_ID.LUTE]: LuteClient;
     [PROVIDER_ID.MAGIC]: MagicAuthClient;
 };
 export declare const createMockClient: <T extends PROVIDER_ID>(providerId: T, clientOptions?: ClientOptions, accounts?: Array<Account>) => ClientTypeMap[T];
@@ -29,6 +31,7 @@ export declare const createAlgoSignerMockInstance: (clientOptions?: ClientOption
 export declare const createDaffiMockInstance: (clientOptions?: ClientOptions, accounts?: Array<Account>) => DaffiWalletClient;
 export declare const createDeflyMockInstance: (clientOptions?: ClientOptions, accounts?: Array<Account>) => DeflyWalletClient;
 export declare const createExodusMockInstance: (clientOptions?: ClientOptions, accounts?: Array<Account>) => ExodusClient;
+export declare const createLuteMockInstance: (clientOptions?: ClientOptions, accounts?: Array<Account>) => LuteClient;
 export declare const createKmdMockInstance: (clientOptions?: ClientOptions, accounts?: Array<Account>) => KMDWalletClient;
 export declare const createCustomMockInstance: (clientOptions?: ClientOptions, accounts?: Array<Account>) => CustomWalletClient;
 export declare const createMnemonicMockInstance: (clientOptions?: ClientOptions, accounts?: Array<Account>) => MnemonicWalletClient;

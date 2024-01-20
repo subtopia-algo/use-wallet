@@ -4,6 +4,7 @@ export declare enum PROVIDER_ID {
     CUSTOM = "custom",
     PERA = "pera",
     DAFFI = "daffi",
+    LUTE = "lute",
     MYALGO = "myalgo",
     ALGOSIGNER = "algosigner",
     DEFLY = "defly",

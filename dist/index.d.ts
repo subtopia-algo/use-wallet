@@ -2,10 +2,11 @@ import algosdk from 'algosdk';
 import { PeraWalletConnect } from '@perawallet/connect';
 import { DeflyWalletConnect } from '@blockshake/defly-connect';
 import { DaffiWalletConnect } from '@daffiwallet/connect';
+import LuteConnect from 'lute-connect';
 import MyAlgoConnect from '@randlabs/myalgo-connect';
 import { WalletConnectModalSignOptions, WalletConnectModalSign } from '@walletconnect/modal-sign-html';
 import { Magic } from 'magic-sdk';
-import * as react from 'react';
+import React from 'react';
 import * as zustand_middleware from 'zustand/middleware';
 import * as immer_dist_internal from 'immer/dist/internal';
 import * as zustand from 'zustand';
@@ -75,6 +76,7 @@ declare enum PROVIDER_ID {
     CUSTOM = "custom",
     PERA = "pera",
     DAFFI = "daffi",
+    LUTE = "lute",
     MYALGO = "myalgo",
     ALGOSIGNER = "algosigner",
     DEFLY = "defly",
@@ -121,7 +123,7 @@ type AccountInfo = {
     'auth-addr'?: string;
     assets?: Asset[];
 };
-type WalletProvider = {
+type WalletProvider$1 = {
     id: PROVIDER_ID;
     name: string;
     icon: string;
@@ -130,7 +132,7 @@ type WalletProvider = {
 type ExtendValues<Type> = {
     [Property in keyof Type]: Type[Property] | null;
 };
-type Wallet = ExtendValues<WalletProvider> & {
+type Wallet = ExtendValues<WalletProvider$1> & {
     accounts: Account[];
 };
 type Metadata = {
@@ -215,6 +217,18 @@ type KMDWalletClientConstructor = {
     algodClient: algosdk.Algodv2;
     wallet: string;
     password: string;
+    network: Network;
+};
+
+type LuteConnectOptions = {
+    siteName: string;
+};
+type LuteClientConstructor = {
+    metadata: Metadata;
+    client: LuteConnect;
+    clientOptions?: LuteConnectOptions;
+    algosdk: typeof algosdk;
+    algodClient: algosdk.Algodv2;
     network: Network;
 };
 
@@ -330,6 +344,11 @@ type ProviderConfigMapping = {
         clientStatic?: typeof WalletConnectModalSign;
         getDynamicClient?: () => Promise<typeof WalletConnectModalSign>;
     };
+    [PROVIDER_ID.LUTE]: {
+        clientOptions?: LuteConnectOptions;
+        clientStatic?: typeof LuteConnect;
+        getDynamicClient?: () => Promise<typeof LuteConnect>;
+    };
     [PROVIDER_ID.MYALGO]: {
         clientOptions?: MyAlgoConnectOptions;
         clientStatic?: typeof MyAlgoConnect;
@@ -402,7 +421,9 @@ type DynamicClient<T> = {
     getDynamicClient: () => Promise<T>;
 };
 type OneOfStaticOrDynamicClient<T> = StaticClient<T> | DynamicClient<T>;
-type ProviderDef = (ProviderConfig<PROVIDER_ID.PERA> & OneOfStaticOrDynamicClient<typeof PeraWalletConnect>) | (ProviderConfig<PROVIDER_ID.MAGIC> & OneOfStaticOrDynamicClient<typeof Magic>) | (ProviderConfig<PROVIDER_ID.DEFLY> & OneOfStaticOrDynamicClient<typeof DeflyWalletConnect>) | (ProviderConfig<PROVIDER_ID.DAFFI> & OneOfStaticOrDynamicClient<typeof DaffiWalletConnect>) | (ProviderConfig<PROVIDER_ID.WALLETCONNECT> & OneOfStaticOrDynamicClient<typeof WalletConnectModalSign> & {
+type ProviderDef = (ProviderConfig<PROVIDER_ID.PERA> & OneOfStaticOrDynamicClient<typeof PeraWalletConnect>) | (ProviderConfig<PROVIDER_ID.MAGIC> & OneOfStaticOrDynamicClient<typeof Magic>) | (ProviderConfig<PROVIDER_ID.DEFLY> & OneOfStaticOrDynamicClient<typeof DeflyWalletConnect>) | (ProviderConfig<PROVIDER_ID.DAFFI> & OneOfStaticOrDynamicClient<typeof DaffiWalletConnect>) | (ProviderConfig<PROVIDER_ID.LUTE> & OneOfStaticOrDynamicClient<typeof LuteConnect> & {
+    clientOptions: LuteConnectOptions;
+}) | (ProviderConfig<PROVIDER_ID.WALLETCONNECT> & OneOfStaticOrDynamicClient<typeof WalletConnectModalSign> & {
     clientOptions: WalletConnectModalSignOptions;
 }) | (ProviderConfig<PROVIDER_ID.MYALGO> & OneOfStaticOrDynamicClient<typeof MyAlgoConnect>) | ProviderConfig<PROVIDER_ID.EXODUS> | ProviderConfig<PROVIDER_ID.KMD> | ProviderConfig<PROVIDER_ID.CUSTOM> | PROVIDER_ID.EXODUS | PROVIDER_ID.KMD | PROVIDER_ID.ALGOSIGNER | PROVIDER_ID.MNEMONIC | PROVIDER_ID.CUSTOM | PROVIDER_ID.MAGIC;
 type ProvidersArray = NonEmptyArray<ProviderDef>;
@@ -414,33 +435,11 @@ declare const reconnectProviders: (providers: SupportedProviders) => Promise<voi
 type NFDTransactionsArray = ['u' | 's', string][];
 declare function encodeNFDTransactionsArray(transactionsArray: NFDTransactionsArray): Uint8Array[];
 
-type WalletStore = {
-    accounts: Account[];
-    activeAccount: Account | null | undefined;
-    setActiveAccount: (account: Account) => void;
-    clearActiveAccount: (id: PROVIDER_ID) => void;
-    addAccounts: (accounts: Account[]) => void;
-    removeAccounts: (providerId: PROVIDER_ID) => void;
-};
-declare const useWalletStore: zustand.UseBoundStore<Omit<Omit<Omit<zustand.StoreApi<WalletStore>, "setState"> & {
-    setState(nextStateOrUpdater: WalletStore | Partial<WalletStore> | ((state: immer_dist_internal.WritableDraft<WalletStore>) => void), shouldReplace?: boolean | undefined): void;
-}, "persist"> & {
-    persist: {
-        setOptions: (options: Partial<zustand_middleware.PersistOptions<WalletStore, WalletStore>>) => void;
-        clearStorage: () => void;
-        rehydrate: () => void | Promise<void>;
-        hasHydrated: () => boolean;
-        onHydrate: (fn: (state: WalletStore) => void) => () => void;
-        onFinishHydration: (fn: (state: WalletStore) => void) => () => void;
-        getOptions: () => Partial<zustand_middleware.PersistOptions<WalletStore, WalletStore>>;
-    };
-}, "setState"> & {
-    setState<A extends string | {
-        type: unknown;
-    }>(nextStateOrUpdater: WalletStore | Partial<WalletStore> | ((state: immer_dist_internal.WritableDraft<WalletStore>) => void), shouldReplace?: boolean | undefined, action?: A | undefined): void;
-}>;
-
-declare const _default: react.Provider<Partial<Record<PROVIDER_ID, BaseClient | null>> | null>;
+interface WalletProviderProps {
+    children: React.ReactNode;
+    value: SupportedProviders | null;
+}
+declare const WalletProvider: ({ children, value }: WalletProviderProps) => React.JSX.Element;
 
 declare class PeraWalletClient extends BaseClient {
     #private;
@@ -554,6 +553,32 @@ declare class ExodusClient extends BaseClient {
     signTransactions(connectedAccounts: string[], txnGroups: Uint8Array[] | Uint8Array[][], indexesToSign?: number[], returnGroup?: boolean): Promise<Uint8Array[]>;
 }
 
+type WalletStore = {
+    accounts: Account[];
+    activeAccount: Account | null | undefined;
+    setActiveAccount: (account: Account) => void;
+    clearActiveAccount: (id: PROVIDER_ID) => void;
+    addAccounts: (accounts: Account[]) => void;
+    removeAccounts: (providerId: PROVIDER_ID) => void;
+};
+declare const useWalletStore: zustand.UseBoundStore<Omit<Omit<Omit<zustand.StoreApi<WalletStore>, "setState"> & {
+    setState(nextStateOrUpdater: WalletStore | Partial<WalletStore> | ((state: immer_dist_internal.WritableDraft<WalletStore>) => void), shouldReplace?: boolean | undefined): void;
+}, "persist"> & {
+    persist: {
+        setOptions: (options: Partial<zustand_middleware.PersistOptions<WalletStore, WalletStore>>) => void;
+        clearStorage: () => void;
+        rehydrate: () => void | Promise<void>;
+        hasHydrated: () => boolean;
+        onHydrate: (fn: (state: WalletStore) => void) => () => void;
+        onFinishHydration: (fn: (state: WalletStore) => void) => () => void;
+        getOptions: () => Partial<zustand_middleware.PersistOptions<WalletStore, WalletStore>>;
+    };
+}, "setState"> & {
+    setState<A extends string | {
+        type: unknown;
+    }>(nextStateOrUpdater: WalletStore | Partial<WalletStore> | ((state: immer_dist_internal.WritableDraft<WalletStore>) => void), shouldReplace?: boolean | undefined, action?: A | undefined): void;
+}>;
+
 type GenesisId = 'betanet-v1.0' | 'testnet-v1.0' | 'mainnet-v1.0' | string;
 type EnableParams = {
     genesisID?: GenesisId;
@@ -617,6 +642,35 @@ declare class AlgoSignerClient extends BaseClient {
     signTransactions(connectedAccounts: string[], transactions: Uint8Array[], indexesToSign?: number[], returnGroup?: boolean): Promise<Uint8Array[]>;
     getGenesisID(): string;
     getAuthAddress(address: string): string | undefined;
+}
+
+declare class LuteClient extends BaseClient {
+    #private;
+    clientOptions?: LuteConnectOptions;
+    network: Network;
+    constructor({ metadata, client, clientOptions, algosdk, algodClient, network }: LuteClientConstructor);
+    static metadata: {
+        id: PROVIDER_ID;
+        name: string;
+        icon: string;
+        isWalletConnect: boolean;
+    };
+    static init({ clientOptions, algodOptions, clientStatic, getDynamicClient, algosdkStatic, network }: InitParams<PROVIDER_ID.LUTE>): Promise<BaseClient | null>;
+    connect(): Promise<{
+        accounts: {
+            name: string;
+            address: string;
+            providerId: PROVIDER_ID;
+        }[];
+        id: PROVIDER_ID;
+        name: string;
+        icon: string;
+        isWalletConnect: boolean;
+    }>;
+    reconnect(): Promise<null>;
+    disconnect(): Promise<void>;
+    shouldSignTxnObject(txn: DecodedTransaction | DecodedSignedTransaction, addresses: string[], indexesToSign: number[] | undefined, idx: number): boolean;
+    signTransactions(connectedAccounts: string[], transactions: Uint8Array[], indexesToSign?: number[], returnGroup?: boolean): Promise<Uint8Array[]>;
 }
 
 type WalletConnectClientConstructor = {
@@ -810,4 +864,4 @@ interface InitializeProvidersOptions {
 }
 declare function useInitializeProviders({ providers, nodeConfig, algosdkStatic, debug }: InitializeProvidersOptions): Partial<Record<PROVIDER_ID, BaseClient | null>> | null;
 
-export { Account, AccountInfo, AlgodClientOptions, Asset, ClientOptions, CommonInitParams, ConfirmedTxn, CustomProvider, DEFAULT_NETWORK, DEFAULT_NODE_BASEURL, DEFAULT_NODE_PORT, DEFAULT_NODE_TOKEN, DecodedSignedTransaction, DecodedTransaction, InitParams, Metadata, Network, NodeConfig, PROVIDER_ID, Provider, ProviderConfig, ProviderConfigMapping, ProvidersArray, PublicNetwork, RawTxnResponse, SupportedProviders, TransactionsArray, Txn, TxnInfo, TxnType, Wallet, WalletClient, _default as WalletProvider, AlgoSignerClient as algosigner, CustomWalletClient as custom, DeflyWalletClient as defly, encodeNFDTransactionsArray, ExodusClient as exodus, KMDWalletClient as kmd, MagicAuth as magic, MnemonicWalletClient as mnemonic, MyAlgoWalletClient as myalgo, PeraWalletClient as pera, reconnectProviders, useInitializeProviders, useWallet, WalletConnectClient as walletconnect };
+export { Account, AccountInfo, AlgodClientOptions, Asset, ClientOptions, CommonInitParams, ConfirmedTxn, CustomProvider, DEFAULT_NETWORK, DEFAULT_NODE_BASEURL, DEFAULT_NODE_PORT, DEFAULT_NODE_TOKEN, DecodedSignedTransaction, DecodedTransaction, InitParams, Metadata, Network, NodeConfig, PROVIDER_ID, Provider, ProviderConfig, ProviderConfigMapping, ProvidersArray, PublicNetwork, RawTxnResponse, SupportedProviders, TransactionsArray, Txn, TxnInfo, TxnType, Wallet, WalletClient, WalletProvider, AlgoSignerClient as algosigner, CustomWalletClient as custom, DeflyWalletClient as defly, encodeNFDTransactionsArray, ExodusClient as exodus, KMDWalletClient as kmd, LuteClient as lute, MagicAuth as magic, MnemonicWalletClient as mnemonic, MyAlgoWalletClient as myalgo, PeraWalletClient as pera, reconnectProviders, useInitializeProviders, useWallet, WalletConnectClient as walletconnect };
