@@ -74,6 +74,11 @@ export type ProviderConfigMapping = {
         clientStatic?: undefined;
         getDynamicClient?: undefined;
     };
+    [PROVIDER_ID.KIBISIS]: {
+        clientOptions?: undefined;
+        clientStatic?: undefined;
+        getDynamicClient?: undefined;
+    };
     [PROVIDER_ID.MAGIC]: {
         clientOptions?: {
             apiKey: string;
@@ -116,11 +121,15 @@ type DynamicClient<T> = {
     getDynamicClient: () => Promise<T>;
 };
 type OneOfStaticOrDynamicClient<T> = StaticClient<T> | DynamicClient<T>;
-type ProviderDef = (ProviderConfig<PROVIDER_ID.PERA> & OneOfStaticOrDynamicClient<typeof PeraWalletConnect>) | (ProviderConfig<PROVIDER_ID.MAGIC> & OneOfStaticOrDynamicClient<typeof Magic>) | (ProviderConfig<PROVIDER_ID.DEFLY> & OneOfStaticOrDynamicClient<typeof DeflyWalletConnect>) | (ProviderConfig<PROVIDER_ID.DAFFI> & OneOfStaticOrDynamicClient<typeof DaffiWalletConnect>) | (ProviderConfig<PROVIDER_ID.LUTE> & OneOfStaticOrDynamicClient<typeof LuteConnect> & {
+type ProviderDef = (ProviderConfig<PROVIDER_ID.PERA> & OneOfStaticOrDynamicClient<typeof PeraWalletConnect>) | (ProviderConfig<PROVIDER_ID.MAGIC> & OneOfStaticOrDynamicClient<typeof Magic> & {
+    clientOptions: {
+        apiKey: string;
+    };
+}) | (ProviderConfig<PROVIDER_ID.DEFLY> & OneOfStaticOrDynamicClient<typeof DeflyWalletConnect>) | (ProviderConfig<PROVIDER_ID.DAFFI> & OneOfStaticOrDynamicClient<typeof DaffiWalletConnect>) | (ProviderConfig<PROVIDER_ID.LUTE> & OneOfStaticOrDynamicClient<typeof LuteConnect> & {
     clientOptions: LuteConnectOptions;
 }) | (ProviderConfig<PROVIDER_ID.WALLETCONNECT> & OneOfStaticOrDynamicClient<typeof WalletConnectModalSign> & {
     clientOptions: WalletConnectModalSignOptions;
-}) | (ProviderConfig<PROVIDER_ID.MYALGO> & OneOfStaticOrDynamicClient<typeof MyAlgoConnect>) | ProviderConfig<PROVIDER_ID.EXODUS> | ProviderConfig<PROVIDER_ID.KMD> | ProviderConfig<PROVIDER_ID.CUSTOM> | PROVIDER_ID.EXODUS | PROVIDER_ID.KMD | PROVIDER_ID.ALGOSIGNER | PROVIDER_ID.MNEMONIC | PROVIDER_ID.CUSTOM | PROVIDER_ID.MAGIC;
+}) | (ProviderConfig<PROVIDER_ID.MYALGO> & OneOfStaticOrDynamicClient<typeof MyAlgoConnect>) | ProviderConfig<PROVIDER_ID.EXODUS> | ProviderConfig<PROVIDER_ID.KMD> | ProviderConfig<PROVIDER_ID.CUSTOM> | ProviderConfig<PROVIDER_ID.KIBISIS> | PROVIDER_ID.EXODUS | PROVIDER_ID.KMD | PROVIDER_ID.ALGOSIGNER | PROVIDER_ID.MNEMONIC | PROVIDER_ID.CUSTOM | PROVIDER_ID.KIBISIS | PROVIDER_ID.MAGIC;
 export type ProvidersArray = NonEmptyArray<ProviderDef>;
 export type WalletClient = BaseClient;
 export type SupportedProviders = Partial<Record<PROVIDER_ID, WalletClient | null>>;

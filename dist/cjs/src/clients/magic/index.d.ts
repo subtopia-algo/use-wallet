@@ -1,2 +1,2 @@
-import pera from './client';
-export default pera;
+import magic from './client';
+export default magic;

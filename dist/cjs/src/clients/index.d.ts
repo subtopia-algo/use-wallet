@@ -11,8 +11,9 @@ import kmd from './kmd';
 import mnemonic from './mnemonic';
 import { CustomProvider } from './custom/types';
 import custom from './custom';
-export { pera, myalgo, defly, exodus, algosigner, lute, walletconnect, kmd, mnemonic, custom, magic, CustomProvider };
+import kibisis from './kibisis';
+export { pera, myalgo, defly, exodus, algosigner, lute, walletconnect, kmd, mnemonic, custom, CustomProvider, kibisis, magic };
 declare const _default: {
-    [x: string]: typeof pera | typeof myalgo | typeof defly | typeof exodus | typeof algosigner | typeof lute | typeof walletconnect | typeof kmd | typeof mnemonic | typeof custom | typeof magic | typeof daffi;
+    [x: string]: typeof pera | typeof myalgo | typeof defly | typeof exodus | typeof algosigner | typeof lute | typeof walletconnect | typeof kmd | typeof mnemonic | typeof custom | typeof kibisis | typeof magic | typeof daffi;
 };
 export default _default;

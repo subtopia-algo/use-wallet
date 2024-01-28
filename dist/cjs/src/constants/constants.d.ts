@@ -9,6 +9,7 @@ export declare enum PROVIDER_ID {
     ALGOSIGNER = "algosigner",
     DEFLY = "defly",
     EXODUS = "exodus",
+    KIBISIS = "kibisis",
     WALLETCONNECT = "walletconnect",
     MNEMONIC = "mnemonic",
     MAGIC = "magic"

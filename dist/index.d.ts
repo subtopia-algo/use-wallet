@@ -81,6 +81,7 @@ declare enum PROVIDER_ID {
     ALGOSIGNER = "algosigner",
     DEFLY = "defly",
     EXODUS = "exodus",
+    KIBISIS = "kibisis",
     WALLETCONNECT = "walletconnect",
     MNEMONIC = "mnemonic",
     MAGIC = "magic"
@@ -101,7 +102,7 @@ type Provider = {
     accounts: Account[];
     isActive: boolean;
     isConnected: boolean;
-    connect: (onDisconnect?: () => void, email?: string) => Promise<void>;
+    connect: (email?: string) => Promise<void>;
     disconnect: () => Promise<void>;
     reconnect: () => Promise<void>;
     setActiveProvider: () => void;
@@ -379,6 +380,11 @@ type ProviderConfigMapping = {
         clientStatic?: undefined;
         getDynamicClient?: undefined;
     };
+    [PROVIDER_ID.KIBISIS]: {
+        clientOptions?: undefined;
+        clientStatic?: undefined;
+        getDynamicClient?: undefined;
+    };
     [PROVIDER_ID.MAGIC]: {
         clientOptions?: {
             apiKey: string;
@@ -421,11 +427,15 @@ type DynamicClient<T> = {
     getDynamicClient: () => Promise<T>;
 };
 type OneOfStaticOrDynamicClient<T> = StaticClient<T> | DynamicClient<T>;
-type ProviderDef = (ProviderConfig<PROVIDER_ID.PERA> & OneOfStaticOrDynamicClient<typeof PeraWalletConnect>) | (ProviderConfig<PROVIDER_ID.MAGIC> & OneOfStaticOrDynamicClient<typeof Magic>) | (ProviderConfig<PROVIDER_ID.DEFLY> & OneOfStaticOrDynamicClient<typeof DeflyWalletConnect>) | (ProviderConfig<PROVIDER_ID.DAFFI> & OneOfStaticOrDynamicClient<typeof DaffiWalletConnect>) | (ProviderConfig<PROVIDER_ID.LUTE> & OneOfStaticOrDynamicClient<typeof LuteConnect> & {
+type ProviderDef = (ProviderConfig<PROVIDER_ID.PERA> & OneOfStaticOrDynamicClient<typeof PeraWalletConnect>) | (ProviderConfig<PROVIDER_ID.MAGIC> & OneOfStaticOrDynamicClient<typeof Magic> & {
+    clientOptions: {
+        apiKey: string;
+    };
+}) | (ProviderConfig<PROVIDER_ID.DEFLY> & OneOfStaticOrDynamicClient<typeof DeflyWalletConnect>) | (ProviderConfig<PROVIDER_ID.DAFFI> & OneOfStaticOrDynamicClient<typeof DaffiWalletConnect>) | (ProviderConfig<PROVIDER_ID.LUTE> & OneOfStaticOrDynamicClient<typeof LuteConnect> & {
     clientOptions: LuteConnectOptions;
 }) | (ProviderConfig<PROVIDER_ID.WALLETCONNECT> & OneOfStaticOrDynamicClient<typeof WalletConnectModalSign> & {
     clientOptions: WalletConnectModalSignOptions;
-}) | (ProviderConfig<PROVIDER_ID.MYALGO> & OneOfStaticOrDynamicClient<typeof MyAlgoConnect>) | ProviderConfig<PROVIDER_ID.EXODUS> | ProviderConfig<PROVIDER_ID.KMD> | ProviderConfig<PROVIDER_ID.CUSTOM> | PROVIDER_ID.EXODUS | PROVIDER_ID.KMD | PROVIDER_ID.ALGOSIGNER | PROVIDER_ID.MNEMONIC | PROVIDER_ID.CUSTOM | PROVIDER_ID.MAGIC;
+}) | (ProviderConfig<PROVIDER_ID.MYALGO> & OneOfStaticOrDynamicClient<typeof MyAlgoConnect>) | ProviderConfig<PROVIDER_ID.EXODUS> | ProviderConfig<PROVIDER_ID.KMD> | ProviderConfig<PROVIDER_ID.CUSTOM> | ProviderConfig<PROVIDER_ID.KIBISIS> | PROVIDER_ID.EXODUS | PROVIDER_ID.KMD | PROVIDER_ID.ALGOSIGNER | PROVIDER_ID.MNEMONIC | PROVIDER_ID.CUSTOM | PROVIDER_ID.KIBISIS | PROVIDER_ID.MAGIC;
 type ProvidersArray = NonEmptyArray<ProviderDef>;
 type WalletClient = BaseClient;
 type SupportedProviders = Partial<Record<PROVIDER_ID, WalletClient | null>>;
@@ -827,6 +837,95 @@ declare class CustomWalletClient extends BaseClient {
     signTransactions(connectedAccounts: string[], txnGroups: Uint8Array[] | Uint8Array[][], indexesToSign?: number[], returnGroup?: boolean): Promise<Uint8Array[]>;
 }
 
+interface Arc0027Account {
+    address: string;
+    name?: string;
+}
+interface KibisisClientConstructor {
+    metadata: Metadata;
+    algosdk: typeof algosdk;
+    algodClient: algosdk.Algodv2;
+    genesisHash: string;
+    methods: ProviderMethods[];
+    network: Network;
+}
+type ProviderMethods = 'enable' | 'getProviders' | 'postTxns' | 'signAndPostTxns' | 'signBytes' | 'signTxns';
+interface SendRequestWithTimeoutOptions<Params> {
+    method: ProviderMethods;
+    params: Params;
+    reference: string;
+    timeout?: number;
+}
+
+declare class KibisisClient extends BaseClient {
+    genesisHash: string;
+    methods: ProviderMethods[];
+    network: Network;
+    constructor({ metadata, algosdk, algodClient, genesisHash, methods, network }: KibisisClientConstructor);
+    static metadata: {
+        id: PROVIDER_ID;
+        icon: string;
+        isWalletConnect: boolean;
+        name: string;
+    };
+    /**
+     * public static functions
+     */
+    static init({ algodOptions, algosdkStatic, network }: InitParams<PROVIDER_ID.KIBISIS>): Promise<BaseClient | null>;
+    static mapAccountsToWallet(accounts: Arc0027Account[]): Wallet;
+    static sendRequestWithTimeout<Params, Result>({ method, params, timeout, reference }: SendRequestWithTimeoutOptions<Params>): Promise<Result | undefined>;
+    /**
+     * private functions
+     */
+    private convertBytesToBase64;
+    private convertBase64ToBytes;
+    /**
+     * Calls the enable method on the provider that returns the authorized accounts.
+     * @returns {Arc0027Account[]} the authorized accounts.
+     * @throws {METHOD_CANCELED_ERROR} if the method was cancelled by the user.
+     * @throws {METHOD_NOT_SUPPORTED_ERROR} if the method is not supported for the configured network.
+     * @throws {METHOD_TIMED_OUT_ERROR} if the method timed out by lack of response.
+     * @throws {NETWORK_NOT_SUPPORTED_ERROR} if the network is not supported for the configured network.
+     * @throws {UNKNOWN_ERROR} if the response result was empty.
+     */
+    private enable;
+    /**
+     * Convenience function that gets the provider information and updates the supported methods. This should be called
+     * before interacting with the provider to ensure methods are supported.
+     * @throws {METHOD_TIMED_OUT_ERROR} if the method timed out by lack of response.
+     * @throws {NETWORK_NOT_SUPPORTED_ERROR} if the network is not supported for the configured network.
+     * @throws {UNKNOWN_ERROR} if the response result was empty.
+     */
+    private refreshSupportedMethods;
+    /**
+     * Calls the signTxns methods to sign the supplied transactions.
+     * @param {Arc0001SignTxns[]} txns -  the unsigned or signed transactions as defined in ARC-0001.
+     * @returns {(string | null)[]} the authorized accounts.
+     * @throws {INVALID_INPUT_ERROR} if computed group ID for the txns does not match the assigned group ID.
+     * @throws {INVALID_GROUP_ID_ERROR} if the unsigned txns is malformed or not conforming to ARC-0001.
+     * @throws {METHOD_CANCELED_ERROR} if the method was cancelled by the user.
+     * @throws {METHOD_NOT_SUPPORTED_ERROR} if the method is not supported for the configured network.
+     * @throws {METHOD_TIMED_OUT_ERROR} if the method timed out by lack of response.
+     * @throws {NETWORK_NOT_SUPPORTED_ERROR} if the network is not supported for the configured network.
+     * @throws {UNAUTHORIZED_SIGNER_ERROR} if a signer in the request is not authorized by the provider.
+     * @throws {UNKNOWN_ERROR} if the response result was empty.
+     */
+    private signTxns;
+    /**
+     * Validates whether a method is supported with the provider.
+     * @param {ProviderMethods} method -  the method to validate.
+     * @throws {METHOD_NOT_SUPPORTED_ERROR} if the method is not supported for the configured network.
+     */
+    private validateMethod;
+    /**
+     * public functions
+     */
+    connect(): Promise<Wallet>;
+    disconnect(): Promise<void>;
+    reconnect(): Promise<Wallet | null>;
+    signTransactions(connectedAccounts: string[], transactions: Uint8Array[], indexesToSign?: number[], returnGroup?: boolean): Promise<Uint8Array[]>;
+}
+
 declare function useWallet(): {
     clients: Partial<Record<PROVIDER_ID, BaseClient | null>> | null;
     providers: Provider[] | null;
@@ -864,4 +963,4 @@ interface InitializeProvidersOptions {
 }
 declare function useInitializeProviders({ providers, nodeConfig, algosdkStatic, debug }: InitializeProvidersOptions): Partial<Record<PROVIDER_ID, BaseClient | null>> | null;
 
-export { Account, AccountInfo, AlgodClientOptions, Asset, ClientOptions, CommonInitParams, ConfirmedTxn, CustomProvider, DEFAULT_NETWORK, DEFAULT_NODE_BASEURL, DEFAULT_NODE_PORT, DEFAULT_NODE_TOKEN, DecodedSignedTransaction, DecodedTransaction, InitParams, Metadata, Network, NodeConfig, PROVIDER_ID, Provider, ProviderConfig, ProviderConfigMapping, ProvidersArray, PublicNetwork, RawTxnResponse, SupportedProviders, TransactionsArray, Txn, TxnInfo, TxnType, Wallet, WalletClient, WalletProvider, AlgoSignerClient as algosigner, CustomWalletClient as custom, DeflyWalletClient as defly, encodeNFDTransactionsArray, ExodusClient as exodus, KMDWalletClient as kmd, LuteClient as lute, MagicAuth as magic, MnemonicWalletClient as mnemonic, MyAlgoWalletClient as myalgo, PeraWalletClient as pera, reconnectProviders, useInitializeProviders, useWallet, WalletConnectClient as walletconnect };
+export { Account, AccountInfo, AlgodClientOptions, Asset, ClientOptions, CommonInitParams, ConfirmedTxn, CustomProvider, DEFAULT_NETWORK, DEFAULT_NODE_BASEURL, DEFAULT_NODE_PORT, DEFAULT_NODE_TOKEN, DecodedSignedTransaction, DecodedTransaction, InitParams, Metadata, Network, NodeConfig, PROVIDER_ID, Provider, ProviderConfig, ProviderConfigMapping, ProvidersArray, PublicNetwork, RawTxnResponse, SupportedProviders, TransactionsArray, Txn, TxnInfo, TxnType, Wallet, WalletClient, WalletProvider, AlgoSignerClient as algosigner, CustomWalletClient as custom, DeflyWalletClient as defly, encodeNFDTransactionsArray, ExodusClient as exodus, KibisisClient as kibisis, KMDWalletClient as kmd, LuteClient as lute, MagicAuth as magic, MnemonicWalletClient as mnemonic, MyAlgoWalletClient as myalgo, PeraWalletClient as pera, reconnectProviders, useInitializeProviders, useWallet, WalletConnectClient as walletconnect };
